@@ -59,7 +59,7 @@ function signupUser($firstname, $lastname, $birthday, $sex, $email, $username, $
     function view()
     {
         $con = $this->opencon();
-        return $con->query("SELECT users.user_id, users.first_name, users.last_name, users.birthdate, users.sex, users.user, users.user_profile_picture, CONCAT(user_address.user_city,', ', user_address.user_province) AS Address from users INNER JOIN user_address ON users.user_id = user_address.user_id")->fetchAll();
+        return $con->query("SELECT users.user_id, users.first_name, users.last_name, users.birthdate, users.sex, users.user, users.user_profile_picture, CONCAT(user_address.user_city,', ', user_address.user_province) AS Address from users INNER JOIN user_address ON users.user_id = user_address.user_id ")->fetchAll();
     }
 
     function delete($id ){
@@ -121,4 +121,21 @@ function updateUserAddress($id, $street, $barangay, $city, $province){
             return false;
     }
 }
+
+
+function viewdata1($id){
+    try{
+        $con = $this->opencon();
+        $query=$con->prepare("SELECT
+        users.user_id, users.first_name, users.last_name, users.birthdate, users.sex, users.user, users.pass, user_address.user_street, user_address.user_barangay, user_address.user_city, user_address.user_province FROM user_address INNER JOIN users ON user_address.user_id = users.user_id WHERE users.user_id = ?");
+        $query->execute([$id]);
+        return $query->Fetch();
+        }
+    catch (PDOException $e) {
+        return [];
 }
+}
+}
+
+
+

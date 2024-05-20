@@ -55,8 +55,9 @@ if(isset($_POST['del'])){
       <tbody>
       <?php
       $counter = 1;
-      $data = $con->view();
-      foreach($data as $row) {
+      $id = $_SESSION['id'];
+      $row = $con->viewdata1($id);
+      // foreach($data as $row) {
         ?>
         <tr>
           <td><?php echo $counter++;?></td>
@@ -88,7 +89,7 @@ if(isset($_POST['del'])){
           </td>
         </tr>
         <?php
-      }
+      // }
       ?>
 
       </tbody>

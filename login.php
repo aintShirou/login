@@ -13,6 +13,7 @@ if (isset($_POST['login'])) {
 
   if ($result) {
       $_SESSION['user'] = $result['user'];
+      $_SESSION['id'] = $result['user_id'];
       header('location:index.php');
   } else {
       $error = "Incorrect username or password. Please try again.";
