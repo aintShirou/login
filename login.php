@@ -30,7 +30,7 @@ if (isset($_POST['login'])) {
   <link rel="stylesheet" href="./bootstrap-5.3.3-dist/css/bootstrap.css">
   <!-- Bootstrap CSS -->
   <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-<link rel="stylesheet" href="./includes/style.css">
+  <link rel="stylesheet" href="includes/style.css?v=<?php echo time(); ?>">
   <style>
   
   </style>
