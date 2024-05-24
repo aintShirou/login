@@ -12,32 +12,20 @@ $profilePicture = $_SESSION['profile_picture'] ?? 'path/to/default/profile_pictu
   </button>
 
   <div class="collapse navbar-collapse" id="navbarTogglerDemo02">
-    <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
-      <li class="nav-item <?php echo ($current_page == 'index.php') ? 'active' : ''; ?>">
-        <a class="nav-link" href="index.php">List<span class="sr-only">(current)</span></a>
-      </li>
-      <li class="nav-item <?php echo ($current_page == 'livesearch.php' OR $current_page == 'update.php') ? 'active' : ''; ?>">
-        <a class="nav-link" href="livesearch.php">Live Search</a>
-      </li>
-      <li class="nav-item <?php echo ($current_page == 'register.php' OR $current_page == 'update.php') ? 'active' : ''; ?>">
-        <a class="nav-link" href="register.php">Register</a>
-      </li>
-      <li class="nav-item <?php echo ($current_page == 'logout.php') ? 'active' : ''; ?>">
-        <a class="nav-link" href="logout.php">Logout</a>
-      </li>
-    </ul>
+ 
 
     
     <ul class="navbar-nav ml-auto">
       <li class="nav-item dropdown">
         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-          <img src="<?php echo $_SESSION['user_profile_picture']; ?>" width="30" height="30" class="rounded-circle" alt="Profile Picture"> <?php echo $_SESSION['user']; ?>
+          <img src="<?php echo $_SESSION['user_profile_picture']; ?>" width="30" height="30" class="rounded-circle mr-1"  alt="Profile Picture"> <?php echo $_SESSION['user']; ?>
         </a>
 
         <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
             <a class="dropdown-item" href="#" data-toggle="modal" data-target="#changeProfilePictureModal"><i class="fas fa-user-circle"></i> Change Profile Picture</a>
             <a class="dropdown-item" href="#" data-toggle="modal" data-target="#updateAccountInfoModal"><i class="fas fa-user-edit"></i> Update Account Information</a>
             <a class="dropdown-item" href="#" data-toggle="modal" data-target="#changePasswordModal"><i class="fas fa-key"></i> Change Password</a>
+            <a class="dropdown-item" href="logout.php" onclick="return confirm('Are you sure you want to leave?')"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
         </div>
 
       </li>

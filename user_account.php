@@ -3,13 +3,38 @@
 require_once('classes/database.php');
 $con = new database();
 session_start();
-
+$id = $_SESSION['user_id'];
+$data=$con->viewdata($id);
 
 if (!isset($_SESSION['user']) || $_SESSION['account_type'] != 1) {
   header('location:login.php');
   exit();
 }
 
+if (isset($_POST['updatepassword'])) {
+  $userId = $_SESSION['user_id'];
+  $newPassword = $_POST['new_password'];
+  $confirmPassword = $_POST['confirm_password'];
+
+  if ($newPassword === $confirmPassword) {
+      $hashedPassword = password_hash($newPassword, PASSWORD_BCRYPT);
+
+      // Update the password in the database using the new method
+      if ($con->updatePassword($userId, $hashedPassword)) {
+          // Password updated successfully
+          header('Location: user_account.php?status=success');
+          exit();
+      } else {
+          // Failed to update password
+          header('Location: user_account.php?status=error');
+          exit();
+      }
+  } else {
+      // Passwords do not match
+      header('Location: user_account.php?status=nomatch');
+      exit();
+  }
+}
 
 ?>
 <!DOCTYPE html>
@@ -62,8 +87,6 @@ if (!isset($_SESSION['user']) || $_SESSION['account_type'] != 1) {
 
 <div class="container my-3">
 
-
-
   <div class="row">
     <div class="col-md-12">
       <div class="profile-info">
@@ -71,9 +94,9 @@ if (!isset($_SESSION['user']) || $_SESSION['account_type'] != 1) {
           <h3>Account Information</h3>
         </div>
         <div class="info-body">
-          <p><strong>First Name:</strong> Jei</p>
-          <p><strong>Last Name:</strong> Pastrana</p>
-          <p><strong>Birthday:</strong> July 27, 1999</p>
+          <p><strong>First Name: </strong> <?php echo $data['first_name']; ?></p>
+          <p><strong>Last Name: </strong><?php echo $data['last_name']; ?></p>
+          <p><strong>Birthday: </strong> <?php echo $data['birthdate']; ?></p>
         </div>
       </div>
     </div>
@@ -85,10 +108,10 @@ if (!isset($_SESSION['user']) || $_SESSION['account_type'] != 1) {
           <h3>Address Information</h3>
         </div>
         <div class="info-body">
-          <p><strong>Street:</strong> </p>
-          <p><strong>Barangay:</strong></p>
-          <p><strong>City:</strong></p>
-          <p><strong>Province:</strong></p>
+          <p><strong>Street: </strong><?php echo $data['user_street']; ?> </p>
+          <p><strong>Barangay: </strong> <?php echo $data['user_barangay']; ?></p>
+          <p><strong>City: </strong> <?php echo $data['user_city']; ?></p>
+          <p><strong>Province: </strong> <?php echo $data['user_province']; ?></p>
           
         </div>
       </div>
@@ -146,11 +169,11 @@ if (!isset($_SESSION['user']) || $_SESSION['account_type'] != 1) {
           </div>
           <div class="form-group">
             <label for="birthday">Birthday</label>
-            <input type="date" class="form-control" id="birthday" name="birthday" value="<?php echo $_SESSION['birthday']; ?>" required>
+            <input type="date" class="form-control" id="birthday" name="birthday" value="<?php echo $_SESSION['birthdate']; ?>" required>
           </div>
           <div class="form-group">
             <label for="address">Address</label>
-            <input type="text" class="form-control" id="address" name="address" value="<?php echo $_SESSION['address']; ?>" required>
+            <input type="text" class="form-control" id="address" name="address" value="<?php echo $_SESSION['Address']; ?>" required>
           </div>
         </div>
         <div class="modal-footer">
@@ -159,42 +182,287 @@ if (!isset($_SESSION['user']) || $_SESSION['account_type'] != 1) {
         </div>
       </form>
     </div>
+    
   </div>
 </div>
 
-<!-- Change Password Modal -->
+<!-- Modal for Change Password -->
 <div class="modal fade" id="changePasswordModal" tabindex="-1" role="dialog" aria-labelledby="changePasswordModalLabel" aria-hidden="true">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
-      <form action="change_password.php" method="post">
-        <div class="modal-header">
-          <h5 class="modal-title" id="changePasswordModalLabel">Change Password</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">
+      <div class="modal-header">
+        <h5 class="modal-title" id="changePasswordModalLabel">Change Password</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="changePasswordForm" method="POST">
           <div class="form-group">
             <label for="currentPassword">Current Password</label>
             <input type="password" class="form-control" id="currentPassword" name="current_password" required>
           </div>
           <div class="form-group">
             <label for="newPassword">New Password</label>
-            <input type="password" class="form-control" id="newPassword" name="new_password" required>
+            <input type="password" class="form-control" id="newPassword" name="new_password" required readonly>
           </div>
           <div class="form-group">
             <label for="confirmPassword">Confirm New Password</label>
-            <input type="password" class="form-control" id="confirmPassword" name="confirm_password" required>
+            <input type="password" class="form-control" id="confirmPassword" name="confirm_password" required readonly>
           </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-          <button type="submit" class="btn btn-primary">Save changes</button>
-        </div>
-      </form>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-primary" name="updatepassword" id="saveChangesBtn" disabled>Save changes</button>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const currentPasswordInput = document.getElementById('currentPassword');
+    const newPasswordInput = document.getElementById('newPassword');
+    const confirmPasswordInput = document.getElementById('confirmPassword');
+    const saveChangesBtn = document.getElementById('saveChangesBtn');
+
+    currentPasswordInput.addEventListener('input', function() {
+        const currentPassword = currentPasswordInput.value;
+        if (currentPassword) {
+            fetch('check_password.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ 'current_password': currentPassword })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.valid) {
+                    currentPasswordInput.classList.add('is-valid');
+                    currentPasswordInput.classList.remove('is-invalid');
+                    newPasswordInput.removeAttribute('readonly');
+                    confirmPasswordInput.removeAttribute('readonly');
+                } else {
+                    currentPasswordInput.classList.add('is-invalid');
+                    currentPasswordInput.classList.remove('is-valid');
+                    newPasswordInput.setAttribute('readonly', 'readonly');
+                    confirmPasswordInput.setAttribute('readonly', 'readonly');
+                }
+                toggleSaveButton();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                currentPasswordInput.classList.add('is-invalid');
+                currentPasswordInput.classList.remove('is-valid');
+                newPasswordInput.setAttribute('readonly', 'readonly');
+                confirmPasswordInput.setAttribute('readonly', 'readonly');
+                toggleSaveButton();
+            });
+        } else {
+            currentPasswordInput.classList.remove('is-valid', 'is-invalid');
+            newPasswordInput.setAttribute('readonly', 'readonly');
+            confirmPasswordInput.setAttribute('readonly', 'readonly');
+            toggleSaveButton();
+        }
+    });
+
+    function toggleSaveButton() {
+        if (currentPasswordInput.classList.contains('is-valid') && validatePassword(newPasswordInput) && validateConfirmPassword(confirmPasswordInput)) {
+            saveChangesBtn.removeAttribute('disabled');
+        } else {
+            saveChangesBtn.setAttribute('disabled', 'disabled');
+        }
+    }
+
+    newPasswordInput.addEventListener('input', function() {
+        validatePassword(newPasswordInput);
+        validateConfirmPassword(confirmPasswordInput);
+        toggleSaveButton();
+    });
+
+    confirmPasswordInput.addEventListener('input', function() {
+        validateConfirmPassword(confirmPasswordInput);
+        toggleSaveButton();
+    });
+
+    function validatePassword(passwordInput) {
+        const password = passwordInput.value;
+        const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+        if (regex.test(password)) {
+            passwordInput.classList.add('is-valid');
+            passwordInput.classList.remove('is-invalid');
+            return true;
+        } else {
+            passwordInput.classList.add('is-invalid');
+            passwordInput.classList.remove('is-valid');
+            return false;
+        }
+    }
+
+    function validateConfirmPassword(confirmPasswordInput) {
+        const password = newPasswordInput.value;
+        const confirmPassword = confirmPasswordInput.value;
+        if (password === confirmPassword && password !== '') {
+            confirmPasswordInput.classList.add('is-valid');
+            confirmPasswordInput.classList.remove('is-invalid');
+            return true;
+        } else {
+            confirmPasswordInput.classList.add('is-invalid');
+            confirmPasswordInput.classList.remove('is-valid');
+            return false;
+        }
+    }
+});
+
+    const currentPasswordInput = document.getElementById('currentPassword');
+    const newPasswordInput = document.getElementById('newPassword');
+    const confirmPasswordInput = document.getElementById('confirmPassword');
+    const saveChangesBtn = document.getElementById('saveChangesBtn');
+
+    currentPasswordInput.addEventListener('input', function() {
+        const currentPassword = currentPasswordInput.value;
+        if (currentPassword) {
+            fetch('check_password.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ 'current_password': currentPassword })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.valid) {
+                    currentPasswordInput.classList.add('is-valid');
+                    currentPasswordInput.classList.remove('is-invalid');
+                    newPasswordInput.removeAttribute('readonly');
+                    confirmPasswordInput.removeAttribute('readonly');
+                } else {
+                    currentPasswordInput.classList.add('is-invalid');
+                    currentPasswordInput.classList.remove('is-valid');
+                    newPasswordInput.setAttribute('readonly', 'readonly');
+                    confirmPasswordInput.setAttribute('readonly', 'readonly');
+                }
+                toggleSaveButton();
+            });
+        } else {
+            currentPasswordInput.classList.remove('is-valid', 'is-invalid');
+            newPasswordInput.setAttribute('readonly', 'readonly');
+            confirmPasswordInput.setAttribute('readonly', 'readonly');
+            toggleSaveButton();
+        }
+    });
+
+    function toggleSaveButton() {
+        if (currentPasswordInput.classList.contains('is-valid') && validatePassword(newPasswordInput) && validateConfirmPassword(confirmPasswordInput)) {
+            saveChangesBtn.removeAttribute('disabled');
+        } else {
+            saveChangesBtn.setAttribute('disabled', 'disabled');
+        }
+    }
+
+    newPasswordInput.addEventListener('input', function() {
+        validatePassword(newPasswordInput);
+        validateConfirmPassword(confirmPasswordInput);
+        toggleSaveButton();
+    });
+
+    confirmPasswordInput.addEventListener('input', function() {
+        validateConfirmPassword(confirmPasswordInput);
+        toggleSaveButton();
+    });
+
+    function validatePassword(passwordInput) {
+        const password = passwordInput.value;
+        const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+        if (regex.test(password)) {
+            passwordInput.classList.add('is-valid');
+            passwordInput.classList.remove('is-invalid');
+            return true;
+        } else {
+            passwordInput.classList.add('is-invalid');
+            passwordInput.classList.remove('is-valid');
+            return false;
+        }
+    }
+
+    function validateConfirmPassword(confirmPasswordInput) {
+        const password = newPasswordInput.value;
+        const confirmPassword = confirmPasswordInput.value;
+        if (password === confirmPassword && password !== '') {
+            confirmPasswordInput.classList.add('is-valid');
+            confirmPasswordInput.classList.remove('is-invalid');
+            return true;
+        } else {
+            confirmPasswordInput.classList.add('is-invalid');
+            confirmPasswordInput.classList.remove('is-valid');
+            return false;
+        }
+    }
+  </script>
+<!-- SweetAlert2 Script For Pop Up Notification -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const params = new URLSearchParams(window.location.search);
+  const status = params.get('status');
+
+  if (status) {
+    let title, text, icon;
+    switch (status) {
+      case 'success':
+        title = 'Success!';
+        text = 'Password updated successfully.';
+        icon = 'success';
+        break;
+      case 'error':
+        title = 'Error!';
+        text = 'Failed to update password.';
+        icon = 'error';
+        break;
+      case 'nomatch':
+        title = 'Error!';
+        text = 'Passwords do not match.';
+        icon = 'error';
+        break;
+      default:
+        return;
+    }
+
+    Swal.fire({
+      title: title,
+      text: text,
+      icon: icon
+    });
+  }
+});
+</script>
+
+<!-- For Address Selector Validation -->
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Fetch region, province, city, and barangay options dynamically if needed
+  // Example for adding event listeners for dynamic fetching
+  // document.getElementById('region').addEventListener('change', fetchProvinces);
+
+  // Example of a function to fetch provinces
+  // function fetchProvinces() {
+  //   const regionId = document.getElementById('region').value;
+  //   // Fetch provinces based on regionId
+  // }
+
+  // Form validation
+  var form = document.getElementById('updateAccountForm');
+  form.addEventListener('submit', function(event) {
+    if (form.checkValidity() === false) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    form.classList.add('was-validated');
+  }, false);
+});
+</script>
+
+
 <!-- Bootstrap JS and dependencies -->
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
